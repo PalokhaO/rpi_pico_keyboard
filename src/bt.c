@@ -186,7 +186,7 @@ static void le_keyboard_setup(void){
 
     l2cap_init();
 
-    // setup SM: Display only
+    // setup SM: No output
     sm_init();
     sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
     sm_set_authentication_requirements(SM_AUTHREQ_SECURE_CONNECTION | SM_AUTHREQ_BONDING);
@@ -225,41 +225,14 @@ static void le_keyboard_setup(void){
     hids_device_register_packet_handler(packet_handler);
 }
 
-// HID Keyboard lookup
-static int lookup_keycode(uint8_t character, const uint8_t * table, int size, uint8_t * keycode){
-    int i;
-    for (i=0;i<size;i++){
-        if (table[i] != character) continue;
-        *keycode = i;
-        return 1;
-    }
-    return 0;
-}
-
-static int keycode_and_modifer_us_for_character(uint8_t character, uint8_t * keycode, uint8_t * modifier){
-    int found;
-    found = lookup_keycode(character, keytable_us_none, sizeof(keytable_us_none), keycode);
-    if (found) {
-        *modifier = 0;  // none
-        return 1;
-    }
-    found = lookup_keycode(character, keytable_us_shift, sizeof(keytable_us_shift), keycode);
-    if (found) {
-        *modifier = 2;  // shift
-        return 1;
-    }
-    return 0;
-}
-
 // HID Report sending
-static void send_report(int modifier, int keycode){
-    uint8_t report[] = {  modifier, 0, keycode, 0, 0, 0, 0, 0};
+static void send_report(uint8_t* report, size_t size) {
     switch (protocol_mode){
         case 0:
-            hids_device_send_boot_keyboard_input_report(con_handle, report, sizeof(report));
+            hids_device_send_boot_keyboard_input_report(con_handle, report, size);
             break;
         case 1:
-           hids_device_send_input_report(con_handle, report, sizeof(report));
+           hids_device_send_input_report(con_handle, report, size);
            break;
         default:
             break;
@@ -267,83 +240,10 @@ static void send_report(int modifier, int keycode){
 }
 
 // Demo Application
-
-#ifdef HAVE_BTSTACK_STDIN
-
-// On systems with STDIN, we can directly type on the console
-static enum {
-    W4_INPUT,
-    W4_CAN_SEND_FROM_BUFFER,
-    W4_CAN_SEND_KEY_UP,
-} state;
-
-// Buffer for 20 characters
-static uint8_t ascii_input_storage[20];
-static btstack_ring_buffer_t ascii_input_buffer;
-
-static void typing_can_send_now(void){
-    switch (state){
-        case W4_CAN_SEND_FROM_BUFFER:
-            while (1){
-                uint8_t c;
-                uint32_t num_bytes_read;
-
-                btstack_ring_buffer_read(&ascii_input_buffer, &c, 1, &num_bytes_read);
-                if (num_bytes_read == 0){
-                    state = W4_INPUT;
-                    break;
-                }
-
-                uint8_t modifier;
-                uint8_t keycode;
-                int found = keycode_and_modifer_us_for_character(c, &keycode, &modifier);
-                if (!found) continue;
-
-                printf("sending: %c\n", c);
-
-                send_report(modifier, keycode);
-                state = W4_CAN_SEND_KEY_UP;
-                hids_device_request_can_send_now_event(con_handle);
-                break;
-            }
-            break;
-        case W4_CAN_SEND_KEY_UP:
-            send_report(0, 0);
-            if (btstack_ring_buffer_bytes_available(&ascii_input_buffer)){
-                state = W4_CAN_SEND_FROM_BUFFER;
-                hids_device_request_can_send_now_event(con_handle);
-            } else {
-                state = W4_INPUT;
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-static void stdin_process(char character){
-    uint8_t c = character;
-    btstack_ring_buffer_write(&ascii_input_buffer, &c, 1);
-    // start sending
-    if (state == W4_INPUT && con_handle != HCI_CON_HANDLE_INVALID){
-        state = W4_CAN_SEND_FROM_BUFFER;
-        hids_device_request_can_send_now_event(con_handle);
-    }
-}
-
-#else
-
 // On embedded systems, send constant demo text with fixed period
-
-#define TYPING_PERIOD_MS 50
-static const char * demo_text = "\n\nHello World!\n\nThis is the BTstack HID Keyboard Demo running on an Embedded Device.\n\n";
-
-static int demo_pos;
-static btstack_timer_source_t typing_timer;
 
 static int send_keycode;
 static int send_modifier;
-static int send_keyup;
 
 static void send_key(int modifier, int keycode){
     send_keycode = keycode;
@@ -352,53 +252,15 @@ static void send_key(int modifier, int keycode){
 }
 
 static void typing_can_send_now(void){
-   send_report(send_modifier, send_keycode);
+    uint8_t report[] = {  send_modifier, 0, send_keycode, 0, 0, 0, 0, 0};
+    send_report(report, sizeof(report));
 }
 
-static void typing_timer_handler(btstack_timer_source_t * ts){
-
-    if (send_keyup){
-        // just send key up
-        send_keyup = 0;
-        send_key(0, 0);
-    } else {
-        // get next character
-        uint8_t character = demo_text[demo_pos++];
-        if (demo_text[demo_pos] == 0){
-            demo_pos = 0;
-        }
-
-        // get keycode and send
-        uint8_t modifier;
-        uint8_t keycode;
-        int found = keycode_and_modifer_us_for_character(character, &keycode, &modifier);
-        if (found){
-            printf("%c\n", character);
-            send_key(modifier, keycode);
-            send_keyup = 1;
-        }
-    }
-
-    // set next timer
-    btstack_run_loop_set_timer(ts, TYPING_PERIOD_MS);
-    btstack_run_loop_add_timer(ts);
-}
-
-static void hid_embedded_start_typing(void){
-    printf("Start typing..\n");
-
-    demo_pos = 0;
-    // set one-shot timer
-    typing_timer.process = &typing_timer_handler;
-    btstack_run_loop_set_timer(&typing_timer, TYPING_PERIOD_MS);
-    btstack_run_loop_add_timer(&typing_timer);
-}
-
-#endif
+// ================================
 
 static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
+    (void) channel;
+    (void) size;
 
     if (packet_type != HCI_EVENT_PACKET) return;
 
@@ -423,9 +285,6 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
                 case HIDS_SUBEVENT_INPUT_REPORT_ENABLE:
                     con_handle = hids_subevent_input_report_enable_get_con_handle(packet);
                     printf("Report Characteristic Subscribed %u\n", hids_subevent_input_report_enable_get_enable(packet));
-#ifndef HAVE_BTSTACK_STDIN
-                    hid_embedded_start_typing();
-#endif
                     break;
                 case HIDS_SUBEVENT_BOOT_KEYBOARD_INPUT_REPORT_ENABLE:
                     con_handle = hids_subevent_boot_keyboard_input_report_enable_get_con_handle(packet);
@@ -448,19 +307,12 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     }
 }
 
-int btstack_main(void);
 int btstack_main(void)
 {
     le_keyboard_setup();
-
-#ifdef HAVE_BTSTACK_STDIN
-    btstack_ring_buffer_init(&ascii_input_buffer, ascii_input_storage, sizeof(ascii_input_storage));
-    btstack_stdin_setup(stdin_process);
-#endif
 
     // turn on!
     hci_power_control(HCI_POWER_ON);
 
     return 0;
 }
-/* EXAMPLE_END */
