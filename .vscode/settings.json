@@ -2,5 +2,8 @@
     "cmake.configureArgs": [
         "-DPICO_BOARD=pico_w"
     ],
-    "cmake.sourceDirectory": "${workspaceFolder}/src"
+    "cmake.sourceDirectory": "${workspaceFolder}/src",
+    "files.associations": {
+        "stdlib.h": "c"
+    },
 }
