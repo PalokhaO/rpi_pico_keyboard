@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "bt_common.h"
 #include "btstack_audio.h"
 #include "btstack_event.h"
 #include "hal_led.h"
@@ -44,16 +45,4 @@ int picow_bt_example_init(void) {
     hci_add_event_handler(&hci_event_callback_registration);
 
     return 0;
-}
-
-int main() {
-    stdio_init_all();
-
-    int res = picow_bt_example_init();
-    if (res){
-        return -1;
-    }
-
-    btstack_main(0, NULL);
-    btstack_run_loop_execute();
 }

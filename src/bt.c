@@ -42,6 +42,9 @@
  */
 // *****************************************************************************
 
+#include "bt_common.h"
+#include "pico/stdlib.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -315,4 +318,16 @@ int btstack_main(void)
     hci_power_control(HCI_POWER_ON);
 
     return 0;
+}
+
+int main() {
+    stdio_init_all();
+
+    int res = picow_bt_example_init();
+    if (res){
+        return -1;
+    }
+
+    btstack_main();
+    while (1) {}
 }
