@@ -27,10 +27,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bsp/board.h"
 #include "tusb.h"
 
 #include "usb_descriptors.h"
+#include "utils.h"
 
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
@@ -54,7 +54,7 @@ void hid_task(void);
 /*------------- MAIN -------------*/
 int main(void)
 {
-  board_init();
+  stdio_init_all();
   tusb_init();
 
   while (1)
@@ -145,11 +145,11 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
     {
       // Capslock On: disable blink, turn led on
       blink_interval_ms = 0;
-      board_led_write(true);
+      board_led(true);
     }else
     {
       // Caplocks Off: back to normal blink
-      board_led_write(false);
+      board_led(false);
       blink_interval_ms = BLINK_MOUNTED;
     }
   }
@@ -194,14 +194,9 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 void hid_task(void)
 {
-  // Poll every 10ms
-  const uint32_t interval_ms = 10;
-  static uint32_t start_ms = 0;
+  EVERY(10);
 
-  if ( board_millis() - start_ms < interval_ms) return; // not enough time
-  start_ms += interval_ms;
-
-  uint32_t const btn = board_button_read();
+  uint32_t const btn = board_button();
 
   // Remote wakeup
   if ( tud_suspended() && btn )

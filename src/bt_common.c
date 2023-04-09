@@ -12,9 +12,6 @@
 #include "pico/stdlib.h"
 #include "btstack_run_loop.h"
 
-// Start the btstack example
-int btstack_main(int argc, const char * argv[]);
-
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
 static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){

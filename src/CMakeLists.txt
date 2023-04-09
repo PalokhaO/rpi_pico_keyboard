@@ -11,15 +11,22 @@ add_executable(usb)
 
 target_sources(usb PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}/usb.c
-  ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
+  ${CMAKE_CURRENT_LIST_DIR}/utils.c
+  ${CMAKE_CURRENT_LIST_DIR}/config/usb_descriptors.c
 )
 # Make sure TinyUSB can find tusb_config.h
 target_include_directories(usb PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR})
+        ${CMAKE_CURRENT_LIST_DIR}/config
+        )
 
 # In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
 # for TinyUSB device support and tinyusb_board for the additional board support library used by the example
-target_link_libraries(usb PUBLIC pico_stdlib tinyusb_device tinyusb_board)
+target_link_libraries(usb PUBLIC
+        pico_stdlib
+        tinyusb_device
+        tinyusb_board
+        pico_cyw43_arch_none     # we need Wifi to access the GPIO, but we don't need anything else
+        )
 
 # Uncomment this line to enable fix for Errata RP2040-E5 (the fix requires use of GPIO 15)
 #target_compile_definitions(usb PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
@@ -54,18 +61,13 @@ target_include_directories(bt_common INTERFACE
 suppress_btstack_warnings()
 
 
-# Add an background example, pass btstack example name, target name, variant lib and extra libs
-add_library(${TARGET_NAME}_lib INTERFACE)
-target_sources(${TARGET_NAME}_lib INTERFACE
-  # actual example
-  bt.c
-)
-pico_btstack_make_gatt_header(${TARGET_NAME}_lib INTERFACE ${CMAKE_CURRENT_LIST_DIR}/hog_keyboard_demo.gatt)
-
-
 add_executable(${TARGET_NAME})
+pico_btstack_make_gatt_header(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/hog_keyboard_demo.gatt)
+target_sources(${TARGET_NAME} PUBLIC
+  bt.c
+  utils.c
+)
 target_link_libraries(${TARGET_NAME} PRIVATE
-  ${TARGET_NAME}_lib
   bt_common
 )
 pico_enable_stdio_usb(${TARGET_NAME} 1)
