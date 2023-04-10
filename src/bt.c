@@ -58,6 +58,8 @@
 #include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/hids_device.h>
 
+#include "bt.h"
+
 // from USB HID Specification 1.1, Appendix B.1
 const uint8_t hid_descriptor_keyboard_boot_mode[] = {
 
@@ -324,30 +326,17 @@ int btstack_main(void)
 
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-void hid_task(void)
+void hid_task_bt(int interval_ms)
 {
-    EVERY(10);
+    EVERY(interval_ms);
 
-    // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_key(
-        0,
-        board_button()
-            ? HID_KEY_A
-            : 0
-    );
-}
-
-
-int main() {
-    stdio_init_all();
-
-    int res = picow_bt_example_init();
-    if (res){
-        return -1;
-    }
-
-    btstack_main();
-    while (1) {
-        hid_task();
+    if (con_handle != HCI_CON_HANDLE_INVALID) {
+        // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
+        send_key(
+            0,
+            board_button()
+                ? HID_KEY_A
+                : 0
+        );
     }
 }

@@ -5,36 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
-#===================USB=====================
-
-add_executable(usb)
-
-target_sources(usb PUBLIC
-  ${CMAKE_CURRENT_LIST_DIR}/usb.c
-  ${CMAKE_CURRENT_LIST_DIR}/utils.c
-  ${CMAKE_CURRENT_LIST_DIR}/config/usb_descriptors.c
-)
-# Make sure TinyUSB can find tusb_config.h
-target_include_directories(usb PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/config
-        )
-
-# In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
-# for TinyUSB device support and tinyusb_board for the additional board support library used by the example
-target_link_libraries(usb PUBLIC
-        pico_stdlib
-        tinyusb_device
-        tinyusb_board
-        pico_cyw43_arch_none     # we need Wifi to access the GPIO, but we don't need anything else
-        )
-
-# Uncomment this line to enable fix for Errata RP2040-E5 (the fix requires use of GPIO 15)
-#target_compile_definitions(usb PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
-
-pico_add_extra_outputs(usb)
-
-#===================BLE======================
-SET(TARGET_NAME "bt_keyboard")
+SET(TARGET_NAME "keyboard")
 
 
 # Adds common stuff for all the examples
@@ -64,12 +35,30 @@ suppress_btstack_warnings()
 add_executable(${TARGET_NAME})
 pico_btstack_make_gatt_header(${TARGET_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/hog_keyboard_demo.gatt)
 target_sources(${TARGET_NAME} PUBLIC
-  bt.c
-  utils.c
+        ${CMAKE_CURRENT_LIST_DIR}/usb.c
+        ${CMAKE_CURRENT_LIST_DIR}/utils.c
+        ${CMAKE_CURRENT_LIST_DIR}/config/usb_descriptors.c
+
+        ${CMAKE_CURRENT_LIST_DIR}/bt.c
+        ${CMAKE_CURRENT_LIST_DIR}/main.c
 )
-target_link_libraries(${TARGET_NAME} PRIVATE
-  bt_common
+target_compile_definitions(${TARGET_NAME} PUBLIC
+        CYW43_LWIP=0
+        PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=3000
+        #WANT_HCI_DUMP=1 # This enables btstack debug
+        #ENABLE_SEGGER_RTT=1
+        )
+target_include_directories(${TARGET_NAME} PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/config
 )
+target_link_libraries(${TARGET_NAME} PUBLIC
+        pico_stdlib
+        bt_common
+        tinyusb_device
+        tinyusb_board
+)
+
 pico_enable_stdio_usb(${TARGET_NAME} 1)
 pico_enable_stdio_uart(${TARGET_NAME} 0)
+
 pico_add_extra_outputs(${TARGET_NAME})

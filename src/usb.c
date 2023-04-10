@@ -32,6 +32,8 @@
 #include "usb_descriptors.h"
 #include "utils.h"
 
+#include "usb.h"
+
 //--------------------------------------------------------------------+
 // MACRO CONSTANT TYPEDEF PROTYPES
 //--------------------------------------------------------------------+
@@ -48,24 +50,6 @@ enum  {
 };
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
-
-void hid_task(void);
-
-/*------------- MAIN -------------*/
-int main(void)
-{
-  stdio_init_all();
-  tusb_init();
-
-  while (1)
-  {
-    tud_task(); // tinyusb device task
-
-    hid_task();
-  }
-
-  return 0;
-}
 
 //--------------------------------------------------------------------+
 // Device callbacks
@@ -192,9 +176,9 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-void hid_task(void)
+void hid_task_usb(int interval_ms)
 {
-  EVERY(10);
+  EVERY(interval_ms);
 
   uint32_t const btn = board_button();
 

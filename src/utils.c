@@ -40,7 +40,7 @@ bool __no_inline_not_in_flash_func(board_button)() {
 
 int board_led(bool state) {
     stdio_init_all();
-    if (cyw43_arch_init()) {
+    if (!cyw43_is_initialized(&cyw43_state) && cyw43_arch_init()) {
         printf("Wi-Fi init failed");
         return -1;
     }

@@ -2,26 +2,5 @@
     "cmake.configureArgs": [
         "-DPICO_BOARD=pico_w"
     ],
-    "cmake.sourceDirectory": "${workspaceFolder}/src",
-    "files.associations": {
-        "stdlib.h": "c",
-        "array": "c",
-        "functional": "c",
-        "istream": "c",
-        "ostream": "c",
-        "tuple": "c",
-        "type_traits": "c",
-        "utility": "c",
-        "bt_common.h": "c",
-        "board.h": "c",
-        "device_information_service_server.h": "c",
-        "hog_keyboard_demo.h": "c",
-        "stdio.h": "c",
-        "string.h": "c",
-        "stdint.h": "c",
-        "inttypes.h": "c",
-        "ansi_escape.h": "c",
-        "stdbool.h": "c",
-        "battery_service_server.h": "c"
-    },
+    "cmake.sourceDirectory": "${workspaceFolder}/src"
 }

@@ -32,7 +32,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
 
 int picow_bt_example_init(void) {
     // initialize CYW43 driver architecture (will enable BT if/because CYW43_ENABLE_BLUETOOTH == 1)
-    if (cyw43_arch_init()) {
+    if (!cyw43_is_initialized(&cyw43_state) && cyw43_arch_init()) {
         printf("failed to initialise cyw43_arch\n");
         return -1;
     }
