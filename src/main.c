@@ -11,25 +11,6 @@
 #include "bt_common.h"
 
 const int interval = 10;
-bool bt_started = false;
-
-void bt_init() {
-    EVERY(5000);
-    if (tud_cdc_connected()) {
-        if(bt_started) {
-            tud_cdc_write_str("bt started\n");
-        } else {
-            tud_cdc_write_str("starting bt\n");
-            int res = picow_bt_example_init();
-            if (res) {
-                return;
-            }
-            tud_cdc_write_str("btstack_main\n");
-            btstack_main();
-            bt_started = true;
-        }
-    }
-}
 
 void heartbeat() {
     EVERY(5000);
@@ -48,15 +29,18 @@ int main() {
     stdio_init_all();
     stdio_set_driver_enabled(&stdio_usb, true);
 
+    int res = picow_bt_example_init();
+    if (res) {
+        return -1;
+    }
+    btstack_main();
+
     while (1) {
         tud();
-        hid_task_usb(interval);
 
         heartbeat();
 
-        bt_init();
-        if (bt_started) {
-            hid_task_bt(interval);
-        }
+        hid_task_usb(interval);
+        hid_task_bt(interval);
     }
 }

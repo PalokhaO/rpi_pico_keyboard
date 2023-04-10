@@ -331,10 +331,11 @@ void hid_task_bt(int interval_ms)
     EVERY(interval_ms);
 
     if (con_handle != HCI_CON_HANDLE_INVALID) {
+        bool btn = board_button();
         // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
         send_key(
             0,
-            board_button()
+            btn
                 ? HID_KEY_A
                 : 0
         );
