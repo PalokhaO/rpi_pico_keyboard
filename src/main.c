@@ -11,7 +11,7 @@
 
 #include "bt_common.h"
 
-const int interval = 10;
+const int PROGMEM interval = 10;
 
 void heartbeat() {
     EVERY(5000);
