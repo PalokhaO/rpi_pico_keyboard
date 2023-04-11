@@ -1,6 +1,7 @@
 
 #include "bt.h"
 #include "usb.h"
+#include "matrix.h"
 
 #include <pico/stdlib.h>
 #include <pico/stdio.h>
@@ -17,17 +18,18 @@ void heartbeat() {
     printf(".\n");
 }
 
+void matrix() {
+    EVERY(1000);
 
-void tud() {
-    // EVERY(11)
-
-    tud_task(); // tinyusb device task
+    matrix_scan();
 }
 
 int main() {
     tusb_init();
     stdio_init_all();
     stdio_set_driver_enabled(&stdio_usb, true);
+
+    matrix_init();
 
     int res = picow_bt_example_init();
     if (res) {
@@ -36,11 +38,13 @@ int main() {
     btstack_main();
 
     while (1) {
-        tud();
+        tud_task();
 
         heartbeat();
 
         hid_task_usb(interval);
         hid_task_bt(interval);
+
+        matrix();
     }
 }
