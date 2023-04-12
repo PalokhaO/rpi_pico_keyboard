@@ -5,14 +5,15 @@
 #include <stdio.h>
 #include <pico/bootrom.h>
 
-#define BOOTLOADER_SCANS 50000
-static int first_row_scans = 0;
+#define BOOTLOADER_CYCLES 50000
+static int bootloader_cycles = 0;
 
 void matrix_init() {
     for (int i = 0; i < COLS; i++) {
         uint pin = col_pins[i];
         gpio_init(pin);
         gpio_set_dir(pin, true);
+        gpio_set_input_enabled(pin, true);
         gpio_put(pin, false);
     }
     for (int i = 0; i < ROWS; i++) {
@@ -28,6 +29,7 @@ void matrix_scan() {
     for (int j = 0; j < COLS; j++) {
         uint col_pin = col_pins[j];
         gpio_put(col_pin, true);
+        sleep_us(5);
 
         for (int i = 0; i < ROWS; i++) {
             uint row_pin = row_pins[i];
@@ -38,12 +40,11 @@ void matrix_scan() {
             matrix_state[i][j] = pressed;
         }
         gpio_put(col_pin, false);
-        sleep_us(5);
     }
-    first_row_scans = matrix_state[0][0]
-        ? first_row_scans + 1
+    bootloader_cycles = matrix_state[0][0]
+        ? bootloader_cycles + 1
         : 0;
-    if (first_row_scans >= BOOTLOADER_SCANS) {
+    if (bootloader_cycles >= BOOTLOADER_CYCLES) {
         reset_usb_boot(0, 0);
     }
 }

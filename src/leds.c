@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <hardware/gpio.h>
 
+#define LAST_BIT 0b1000000000000000
+
 void leds_init() {
     gpio_init(SER_PIN);
     gpio_set_dir(SER_PIN, true);
@@ -28,18 +30,12 @@ void leds_enable(bool enabled) {
 
 void leds_write(uint16_t mask) {
     // Revert the pin value for index 0 (CAPS)
-    mask ^= 1;
-    printf("Before loop: %x\n", mask);
-    for (uint16_t pin_mask = 1; pin_mask > 0; pin_mask <<= 1) {
-        printf("pin_mask: %x\n", pin_mask);
+    mask ^= LAST_BIT;
+    for (uint16_t pin_mask = LAST_BIT; pin_mask > 0; pin_mask >>= 1) {
         gpio_put(SER_PIN, mask & pin_mask);
-        sleep_us(1);
         gpio_put(SRCLK_PIN, true);
-        sleep_us(1);
         gpio_put(SRCLK_PIN, false);
     }
-    sleep_us(1);
     gpio_put(RCLK_PIN, true);
-    sleep_us(1);
     gpio_put(RCLK_PIN, false);
 }

@@ -13,26 +13,12 @@
 #include "bt_common.h"
 
 const int interval = 10;
-uint16_t leds_status = 0;
+// Just color everything teal for now
+uint16_t leds_status = 0b0011011011011011;
 
 void heartbeat() {
     EVERY_MS(5000);
     printf(".\n");
-}
-
-void matrix() {
-    EVERY_US(5);
-
-    matrix_scan();
-}
-
-void leds() {
-    EVERY_MS(1000);
-    leds_status <<= 1;
-    leds_status = leds_status
-        ? leds_status
-        : 1;
-    leds_write(leds_status);
 }
 
 int main() {
@@ -60,7 +46,6 @@ int main() {
         hid_task_usb(interval);
         hid_task_bt(interval);
 
-        matrix();
-        leds();
+        matrix_scan();
     }
 }
