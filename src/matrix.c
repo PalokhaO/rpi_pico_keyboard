@@ -3,7 +3,10 @@
 
 #include <pico/stdlib.h>
 #include <stdio.h>
-#include <hardware/gpio.h>
+#include <pico/bootrom.h>
+
+#define BOOTLOADER_SCANS 50000
+static int first_row_scans = 0;
 
 void matrix_init() {
     for (int i = 0; i < COLS; i++) {
@@ -21,8 +24,7 @@ void matrix_init() {
 }
 
 void matrix_scan() {
-    printf("Matrix_scan: ");
-    
+    bool left_row_pressed = true;
     for (int j = 0; j < COLS; j++) {
         uint col_pin = col_pins[j];
         gpio_put(col_pin, true);
@@ -30,13 +32,18 @@ void matrix_scan() {
         for (int i = 0; i < ROWS; i++) {
             uint row_pin = row_pins[i];
             bool pressed = gpio_get(row_pins[i]);
-            if (pressed) {
-                printf("%dx%d, ", i, j);
+            if (!j && !pressed) {
+                left_row_pressed = false;
             }
             matrix_state[i][j] = pressed;
         }
         gpio_put(col_pin, false);
         sleep_us(5);
     }
-    printf("\n");
+    first_row_scans = matrix_state[0][0]
+        ? first_row_scans + 1
+        : 0;
+    if (first_row_scans >= BOOTLOADER_SCANS) {
+        reset_usb_boot(0, 0);
+    }
 }

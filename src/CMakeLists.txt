@@ -42,6 +42,7 @@ target_sources(${TARGET_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/bt.c
         ${CMAKE_CURRENT_LIST_DIR}/main.c
         ${CMAKE_CURRENT_LIST_DIR}/matrix.c
+        ${CMAKE_CURRENT_LIST_DIR}/leds.c
 )
 target_compile_definitions(${TARGET_NAME} PUBLIC
         CYW43_LWIP=0

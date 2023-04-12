@@ -324,11 +324,11 @@ int btstack_main(void)
 }
 
 
-// Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
+// EVERY_MS 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 void hid_task_bt(int interval_ms)
 {
-    EVERY(interval_ms);
+    EVERY_MS(interval_ms);
 
     if (con_handle != HCI_CON_HANDLE_INVALID) {
         bool btn = board_button();
