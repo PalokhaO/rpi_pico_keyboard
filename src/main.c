@@ -21,6 +21,13 @@ void heartbeat() {
     printf(".\n");
 }
 
+void on_caps(bool caps) {
+    leds_status = caps
+        ? (leds_status | U16_LAST_BIT)
+        : (leds_status & ~U16_LAST_BIT);
+    leds_write(leds_status);
+}
+
 int main() {
     leds_init();
     leds_write(leds_status);
@@ -29,6 +36,7 @@ int main() {
     tusb_init();
     stdio_init_all();
     stdio_set_driver_enabled(&stdio_usb, true);
+    set_caps_cb(&on_caps);
 
     matrix_init();
 

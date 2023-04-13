@@ -70,18 +70,6 @@ uint8_t const * tud_descriptor_device_cb(void)
   return (uint8_t const *) &desc_device;
 }
 
-//--------------------------------------------------------------------+
-// HID Report Descriptor
-//--------------------------------------------------------------------+
-
-uint8_t const desc_hid_report[] =
-{
-  TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         )),
-  TUD_HID_REPORT_DESC_MOUSE   ( HID_REPORT_ID(REPORT_ID_MOUSE            )),
-  TUD_HID_REPORT_DESC_CONSUMER( HID_REPORT_ID(REPORT_ID_CONSUMER_CONTROL )),
-  TUD_HID_REPORT_DESC_GAMEPAD ( HID_REPORT_ID(REPORT_ID_GAMEPAD          ))
-};
-
 // Invoked when received GET HID REPORT DESCRIPTOR
 // Application return pointer to descriptor
 // Descriptor contents must exist long enough for transfer to complete
@@ -119,7 +107,7 @@ uint8_t const desc_configuration[] =
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 4, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, 64),
 
   // Interface number, string index, protocol, report descriptor len, EP In address, size & polling interval
-  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
+  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, desc_hid_size, EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
 };
 
 #if TUD_OPT_HIGH_SPEED
@@ -135,9 +123,9 @@ tusb_desc_device_qualifier_t const desc_device_qualifier =
   .bDescriptorType    = TUSB_DESC_DEVICE_QUALIFIER,
   .bcdUSB             = USB_BCD,
 
-  .bDeviceClass       = 0x00,
-  .bDeviceSubClass    = 0x00,
-  .bDeviceProtocol    = 0x00,
+  .bDeviceClass       = TUSB_CLASS_MISC,
+  .bDeviceSubClass    = MISC_SUBCLASS_COMMON,
+  .bDeviceProtocol    = MISC_PROTOCOL_IAD,
 
   .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
   .bNumConfigurations = 0x01,

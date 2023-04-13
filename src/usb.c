@@ -50,6 +50,7 @@ enum  {
 };
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
+static bool_cb caps_cb = NULL;
 
 //--------------------------------------------------------------------+
 // Device callbacks
@@ -125,16 +126,8 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 
     uint8_t const kbd_leds = buffer[0];
 
-    if (kbd_leds & KEYBOARD_LED_CAPSLOCK)
-    {
-      // Capslock On: disable blink, turn led on
-      blink_interval_ms = 0;
-      board_led(true);
-    }else
-    {
-      // Caplocks Off: back to normal blink
-      board_led(false);
-      blink_interval_ms = BLINK_MOUNTED;
+    if (caps_cb) {
+      caps_cb(kbd_leds & KEYBOARD_LED_CAPSLOCK);
     }
   }
 }
@@ -195,3 +188,6 @@ void hid_task_usb(int interval_ms)
   }
 }
 
+void set_caps_cb(bool_cb cb) {
+  caps_cb = cb;
+}

@@ -59,113 +59,7 @@
 #include <ble/gatt-service/hids_device.h>
 
 #include "bt.h"
-
-// from USB HID Specification 1.1, Appendix B.1
-const uint8_t hid_descriptor_keyboard_boot_mode[] = {
-
-    0x05, 0x01,                    // Usage Page (Generic Desktop)
-    0x09, 0x06,                    // Usage (Keyboard)
-    0xa1, 0x01,                    // Collection (Application)
-
-    0x85,  0x01,                   // Report ID 1
-
-    // Modifier byte
-
-    0x75, 0x01,                    //   Report Size (1)
-    0x95, 0x08,                    //   Report Count (8)
-    0x05, 0x07,                    //   Usage Page (Key codes)
-    0x19, 0xe0,                    //   Usage Minimum (Keyboard LeftControl)
-    0x29, 0xe7,                    //   Usage Maxium (Keyboard Right GUI)
-    0x15, 0x00,                    //   Logical Minimum (0)
-    0x25, 0x01,                    //   Logical Maximum (1)
-    0x81, 0x02,                    //   Input (Data, Variable, Absolute)
-
-    // Reserved byte
-
-    0x75, 0x01,                    //   Report Size (1)
-    0x95, 0x08,                    //   Report Count (8)
-    0x81, 0x03,                    //   Input (Constant, Variable, Absolute)
-
-    // LED report + padding
-
-    0x95, 0x05,                    //   Report Count (5)
-    0x75, 0x01,                    //   Report Size (1)
-    0x05, 0x08,                    //   Usage Page (LEDs)
-    0x19, 0x01,                    //   Usage Minimum (Num Lock)
-    0x29, 0x05,                    //   Usage Maxium (Kana)
-    0x91, 0x02,                    //   Output (Data, Variable, Absolute)
-
-    0x95, 0x01,                    //   Report Count (1)
-    0x75, 0x03,                    //   Report Size (3)
-    0x91, 0x03,                    //   Output (Constant, Variable, Absolute)
-
-    // Keycodes
-
-    0x95, 0x06,                    //   Report Count (6)
-    0x75, 0x08,                    //   Report Size (8)
-    0x15, 0x00,                    //   Logical Minimum (0)
-    0x25, 0xff,                    //   Logical Maximum (1)
-    0x05, 0x07,                    //   Usage Page (Key codes)
-    0x19, 0x00,                    //   Usage Minimum (Reserved (no event indicated))
-    0x29, 0xff,                    //   Usage Maxium (Reserved)
-    0x81, 0x00,                    //   Input (Data, Array)
-
-    0xc0,                          // End collection
-};
-
-
-
-//
-#define CHAR_ILLEGAL     0xff
-#define CHAR_RETURN     '\n'
-#define CHAR_ESCAPE      27
-#define CHAR_TAB         '\t'
-#define CHAR_BACKSPACE   0x7f
-
-#define HID_KEY_A 0x04
-
-// Simplified US Keyboard with Shift modifier
-
-/**
- * English (US)
- */
-static const uint8_t keytable_us_none [] = {
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /*   0-3 */
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',                   /*  4-13 */
-    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',                   /* 14-23 */
-    'u', 'v', 'w', 'x', 'y', 'z',                                       /* 24-29 */
-    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',                   /* 30-39 */
-    CHAR_RETURN, CHAR_ESCAPE, CHAR_BACKSPACE, CHAR_TAB, ' ',            /* 40-44 */
-    '-', '=', '[', ']', '\\', CHAR_ILLEGAL, ';', '\'', 0x60, ',',       /* 45-54 */
-    '.', '/', CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,   /* 55-60 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 61-64 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 65-68 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 69-72 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 73-76 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 77-80 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 81-84 */
-    '*', '-', '+', '\n', '1', '2', '3', '4', '5',                       /* 85-97 */
-    '6', '7', '8', '9', '0', '.', 0xa7,                                 /* 97-100 */
-};
-
-static const uint8_t keytable_us_shift[] = {
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /*  0-3  */
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',                   /*  4-13 */
-    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',                   /* 14-23 */
-    'U', 'V', 'W', 'X', 'Y', 'Z',                                       /* 24-29 */
-    '!', '@', '#', '$', '%', '^', '&', '*', '(', ')',                   /* 30-39 */
-    CHAR_RETURN, CHAR_ESCAPE, CHAR_BACKSPACE, CHAR_TAB, ' ',            /* 40-44 */
-    '_', '+', '{', '}', '|', CHAR_ILLEGAL, ':', '"', 0x7E, '<',         /* 45-54 */
-    '>', '?', CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,   /* 55-60 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 61-64 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 65-68 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 69-72 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 73-76 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 77-80 */
-    CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL, CHAR_ILLEGAL,             /* 81-84 */
-    '*', '-', '+', '\n', '1', '2', '3', '4', '5',                       /* 85-97 */
-    '6', '7', '8', '9', '0', '.', 0xb1,                                 /* 97-100 */
-};
+#include "usb_descriptors.h"
 
 // static btstack_timer_source_t heartbeat;
 static btstack_packet_callback_registration_t hci_event_callback_registration;
@@ -188,49 +82,6 @@ const uint8_t adv_data[] = {
 };
 const uint8_t adv_data_len = sizeof(adv_data);
 
-static void le_keyboard_setup(void){
-
-    l2cap_init();
-
-    // setup SM: No output
-    sm_init();
-    sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
-    sm_set_authentication_requirements(SM_AUTHREQ_SECURE_CONNECTION | SM_AUTHREQ_BONDING);
-
-    // setup ATT server
-    att_server_init(profile_data, NULL, NULL);
-
-    // setup battery service
-    battery_service_server_init(battery);
-
-    // setup device information service
-    device_information_service_server_init();
-
-    // setup HID Device service
-    hids_device_init(0, hid_descriptor_keyboard_boot_mode, sizeof(hid_descriptor_keyboard_boot_mode));
-
-    // setup advertisements
-    uint16_t adv_int_min = 0x0030;
-    uint16_t adv_int_max = 0x0030;
-    uint8_t adv_type = 0;
-    bd_addr_t null_addr;
-    memset(null_addr, 0, 6);
-    gap_advertisements_set_params(adv_int_min, adv_int_max, adv_type, 0, null_addr, 0x07, 0x00);
-    gap_advertisements_set_data(adv_data_len, (uint8_t*) adv_data);
-    gap_advertisements_enable(1);
-
-    // register for HCI events
-    hci_event_callback_registration.callback = &packet_handler;
-    hci_add_event_handler(&hci_event_callback_registration);
-
-    // register for SM events
-    sm_event_callback_registration.callback = &packet_handler;
-    sm_add_event_handler(&sm_event_callback_registration);
-
-    // register for HIDS
-    hids_device_register_packet_handler(packet_handler);
-}
-
 // HID Report sending
 static void send_report(uint8_t* report, size_t size) {
     switch (protocol_mode){
@@ -248,19 +99,10 @@ static void send_report(uint8_t* report, size_t size) {
 // Demo Application
 // On embedded systems, send constant demo text with fixed period
 
-static int send_keycode;
-static int send_modifier;
+// Report to be sent
+uint8_t *report_to_send;
+size_t report_size_to_send;
 
-static void send_key(int modifier, int keycode){
-    send_keycode = keycode;
-    send_modifier = modifier;
-    hids_device_request_can_send_now_event(con_handle);
-}
-
-static void typing_can_send_now(void){
-    uint8_t report[] = {  send_modifier, 0, send_keycode, 0, 0, 0, 0, 0};
-    send_report(report, sizeof(report));
-}
 
 // ================================
 
@@ -288,6 +130,10 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
             break;
         case HCI_EVENT_HIDS_META:
             switch (hci_event_hids_meta_get_subevent_code(packet)){
+                case HIDS_SUBEVENT_OUTPUT_REPORT_ENABLE:
+                    con_handle = hids_subevent_output_report_enable_get_con_handle(packet);
+                    printf("Report Characteristic Subscribed %u\n", hids_subevent_output_report_enable_get_enable(packet));
+                    break;
                 case HIDS_SUBEVENT_INPUT_REPORT_ENABLE:
                     con_handle = hids_subevent_input_report_enable_get_con_handle(packet);
                     printf("Report Characteristic Subscribed %u\n", hids_subevent_input_report_enable_get_enable(packet));
@@ -301,7 +147,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
                     printf("Protocol Mode: %s mode\n", hids_subevent_protocol_mode_get_protocol_mode(packet) ? "Report" : "Boot");
                     break;
                 case HIDS_SUBEVENT_CAN_SEND_NOW:
-                    typing_can_send_now();
+                    send_report(report_to_send, report_size_to_send);
                     break;
                 default:
                     break;
@@ -313,31 +159,65 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     }
 }
 
-int btstack_main(void)
+int bt_init(void)
 {
-    le_keyboard_setup();
+    l2cap_init();
 
-    // turn on!
-    hci_power_control(HCI_POWER_ON);
+    // setup SM: No output
+    sm_init();
+    sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
+    sm_set_authentication_requirements(SM_AUTHREQ_SECURE_CONNECTION | SM_AUTHREQ_BONDING);
+
+    // setup ATT server
+    att_server_init(profile_data, NULL, NULL);
+
+    // setup battery service
+    battery_service_server_init(battery);
+
+    // setup device information service
+    device_information_service_server_init();_
+
+    // setup HID Device service
+    hids_device_init(0, desc_hid_report, desc_hid_size);
+
+    // setup advertisements
+    uint16_t adv_int_min = 0x0030;
+    uint16_t adv_int_max = 0x0030;
+    uint8_t adv_type = 0;
+    bd_addr_t null_addr;
+    memset(null_addr, 0, 6);
+    gap_advertisements_set_params(adv_int_min, adv_int_max, adv_type, 0, null_addr, 0x07, 0x00);
+    gap_advertisements_set_data(adv_data_len, (uint8_t*) adv_data);
+    gap_advertisements_enable(1);
+
+    // register for HCI events
+    hci_event_callback_registration.callback = &packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
+
+    // register for SM events
+    sm_event_callback_registration.callback = &packet_handler;
+    sm_add_event_handler(&sm_event_callback_registration);
+
+    // register for HIDS
+    hids_device_register_packet_handler(packet_handler);
 
     return 0;
 }
 
+void bt_radio_toggle(bool enabled) {
+    // turn on!
+    hci_power_control(enabled
+        ? HCI_POWER_ON
+        : HCI_POWER_OFF
+    );
+}
 
-// EVERY_MS 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
-// tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-void hid_task_bt(int interval_ms)
-{
-    EVERY_MS(interval_ms);
-
-    if (con_handle != HCI_CON_HANDLE_INVALID) {
-        bool btn = board_button();
-        // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-        send_key(
-            0,
-            btn
-                ? HID_KEY_A
-                : 0
-        );
+void bt_send_report(uint8_t *report, size_t report_size){
+    if (con_handle == HCI_CON_HANDLE_INVALID) {
+        // Don't send anything if the there's no active connection
+        return;
     }
+    report_to_send = report;
+    report_size_to_send = report_size;
+    hids_device_request_can_send_now_event(con_handle);
 }

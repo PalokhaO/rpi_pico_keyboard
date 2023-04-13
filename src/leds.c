@@ -3,8 +3,7 @@
 #include <pico/stdlib.h>
 #include <stdio.h>
 #include <hardware/gpio.h>
-
-#define LAST_BIT 0b1000000000000000
+#include "utils.h"
 
 void leds_init() {
     gpio_init(SER_PIN);
@@ -30,8 +29,8 @@ void leds_enable(bool enabled) {
 
 void leds_write(uint16_t mask) {
     // Revert the pin value for index 0 (CAPS)
-    mask ^= LAST_BIT;
-    for (uint16_t pin_mask = LAST_BIT; pin_mask > 0; pin_mask >>= 1) {
+    mask ^= U16_LAST_BIT;
+    for (uint16_t pin_mask = U16_LAST_BIT; pin_mask > 0; pin_mask >>= 1) {
         gpio_put(SER_PIN, mask & pin_mask);
         gpio_put(SRCLK_PIN, true);
         gpio_put(SRCLK_PIN, false);

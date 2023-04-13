@@ -5,6 +5,7 @@
 #include <pico/stdlib.h>
 #include <hardware/timer.h>
 
+#define U16_LAST_BIT 0b1000000000000000
 
 #define EVERY_US(interval_us) \
   static uint32_t start_us = 0;\
