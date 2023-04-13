@@ -7,6 +7,6 @@
 typedef void (*bool_cb) (bool);
 
 void set_caps_cb(bool_cb);
-void hid_task_usb(int interval_ms);
+void usb_send_report(uint8_t* report_buf, size_t report_length);
 
 #endif

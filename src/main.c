@@ -9,12 +9,17 @@
 #include "pico/cyw43_arch.h"
 #include "utils.h"
 #include "leds.h"
+#include "report.h"
 
 #include "bt_common.h"
+#include "usb_descriptors.h"
 
-const int interval = 10;
+#define POLLING_INTERVAL 1
+
 // Just color everything teal for now
 uint16_t leds_status = 0b0011011011011011;
+uint8_t report[KB_REPORT_LENGTH] = {0};
+uint8_t prev_report[KB_REPORT_LENGTH] = {0};
 
 void heartbeat() {
     EVERY_MS(5000);
@@ -28,32 +33,43 @@ void on_caps(bool caps) {
     leds_write(leds_status);
 }
 
+void send_reports() {
+    EVERY_MS(POLLING_INTERVAL)
+    get_report(report, KB_REPORT_LENGTH);
+    if (memcmp(prev_report, report, KB_REPORT_LENGTH)) {
+        bt_send_report(report, KB_REPORT_LENGTH);
+        usb_send_report(report, KB_REPORT_LENGTH);
+
+        memcpy(prev_report, report, KB_REPORT_LENGTH);
+    }
+}
+
 int main() {
-    leds_init();
-    leds_write(leds_status);
-    leds_enable(true);
+    matrix_init();
 
     tusb_init();
     stdio_init_all();
     stdio_set_driver_enabled(&stdio_usb, true);
     set_caps_cb(&on_caps);
 
-    matrix_init();
+    leds_init();
+    leds_write(leds_status);
+    leds_enable(true);
 
     int res = picow_bt_example_init();
     if (res) {
         return -1;
     }
-    btstack_main();
+    bt_init();
+    bt_radio_toggle(true);
 
     while (1) {
         tud_task();
 
         heartbeat();
 
-        hid_task_usb(interval);
-        hid_task_bt(interval);
-
         matrix_scan();
+
+        send_reports();
     }
 }

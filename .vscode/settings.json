@@ -3,4 +3,10 @@
         "-DPICO_BOARD=pico_w"
     ],
     "cmake.sourceDirectory": "${workspaceFolder}/src",
+    "files.associations": {
+        "system_error": "c",
+        "keymap.h": "c",
+        "layout.h": "c",
+        "usb_descriptors.h": "c"
+    },
 }

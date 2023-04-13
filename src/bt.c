@@ -60,6 +60,7 @@
 
 #include "bt.h"
 #include "usb_descriptors.h"
+#include <string.h>
 
 // static btstack_timer_source_t heartbeat;
 static btstack_packet_callback_registration_t hci_event_callback_registration;
@@ -100,7 +101,7 @@ static void send_report(uint8_t* report, size_t size) {
 // On embedded systems, send constant demo text with fixed period
 
 // Report to be sent
-uint8_t *report_to_send;
+uint8_t report_to_send[KB_REPORT_LENGTH]  = {0};
 size_t report_size_to_send;
 
 
@@ -175,8 +176,8 @@ int bt_init(void)
     battery_service_server_init(battery);
 
     // setup device information service
-    device_information_service_server_init();_
-
+    device_information_service_server_init();
+    
     // setup HID Device service
     hids_device_init(0, desc_hid_report, desc_hid_size);
 
@@ -217,7 +218,7 @@ void bt_send_report(uint8_t *report, size_t report_size){
         // Don't send anything if the there's no active connection
         return;
     }
-    report_to_send = report;
+    memcpy(report_to_send, report, report_size);
     report_size_to_send = report_size;
     hids_device_request_can_send_now_event(con_handle);
 }

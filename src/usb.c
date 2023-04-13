@@ -136,56 +136,25 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 // USB HID
 //--------------------------------------------------------------------+
 
-static void send_hid_report(uint8_t report_id, uint32_t btn)
+void usb_send_report(uint8_t* report_buf, size_t report_length)
 {
   // skip if hid is not ready yet
   if ( !tud_hid_ready() ) return;
 
-  switch(report_id)
-  {
-    case REPORT_ID_KEYBOARD:
-    {
-      // use to avoid send multiple consecutive zero report for keyboard
-      static bool has_keyboard_key = false;
-      uint8_t keycode[6] = { 0 };
-
-      if ( btn )
-      {
-        keycode[0] = HID_KEY_A;
-
-        tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
-        has_keyboard_key = true;
-      }else
-      {
-        // send empty key report if previously has key pressed
-        if (has_keyboard_key) tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-        has_keyboard_key = false;
-      }
-    }
-    break;
-    default: break;
-  }
-}
-
-// EVERY_MS 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
-// tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-void hid_task_usb(int interval_ms)
-{
-  EVERY_MS(interval_ms);
-
-  uint32_t const btn = board_button();
-
   // Remote wakeup
-  if ( tud_suspended() && btn )
+  if ( tud_suspended() )
   {
     // Wake up host if we are in suspend mode
     // and REMOTE_WAKEUP feature is enabled by host
     tud_remote_wakeup();
-  }else
-  {
-    // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
-    send_hid_report(REPORT_ID_KEYBOARD, btn);
+    return;
   }
+  hid_keyboard_report_t report;
+
+  report.modifier = report_buf[0];
+  report.reserved = 0;
+  memcpy(report.keycode, report_buf + 2, report_length-2);
+  tud_hid_n_report(0, REPORT_ID_KEYBOARD, &report, report_length);
 }
 
 void set_caps_cb(bool_cb cb) {

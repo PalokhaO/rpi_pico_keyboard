@@ -2,8 +2,10 @@
 #ifndef _BT_H_
 #define _BT_H_
 
-int btstack_main(void);
-void hid_task_bt(int interval_ms);
+#include <pico/stdlib.h>
 
+int bt_init(void);
+void bt_radio_toggle(bool enabled);
+void bt_send_report(uint8_t *report, size_t report_size);
 
 #endif
